@@ -1,0 +1,15 @@
+django==4.2.16
+djangorestframework==3.15.2
+environs==11.0.0
+python-dateutil==2.9.0.post0
+pytz==2024.2
+djangorestframework-simplejwt[crypto]==5.3.1
+pillow==11.0.0
+django-resized==1.0.3
+celery==5.2.7
+kombu==5.2.4
+redis==5.2.0
+openai==1.57.3
+pydantic
+psycopg[binary]==3.1.10
+gunicorn==23.0.0

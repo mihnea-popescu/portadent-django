@@ -1,0 +1,42 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - master  # Trigger on push to the main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up SSH Key and connect
+      - name: Setup SSH Key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # Step 3: Connect to Server and Run Commands
+      - name: Deploy on Server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd /home/mihnea/backend-django  # Navigate to your project directory
+          
+            echo "Pulling latest code..."
+            git pull origin master
+          
+            echo "Bringing down Docker containers..."
+            docker compose down
+          
+            echo "Bringing up Docker containers..."
+            docker compose up -d --build
+          
+            echo "Running database migrations..."
+            docker exec portadent-django python manage.py migrate
+          
+            echo "Deployment complete!"
+          EOF
