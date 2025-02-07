@@ -3,7 +3,7 @@ from api.models import Scan, ScanStatusType, ScanResult, User, ScanProcess, Scan
 from django.core.mail import send_mail
 from django.conf import settings
 from PIL import Image
-from core.image_processing.image import image_to_base64
+from core.image_processing.image import encode_image_to_base64
 from openai import OpenAI
 from api.celery_tasks.responses import ScanProcessResponseType
 import json
@@ -42,7 +42,7 @@ def process_next_scan():
         try:
             with Image.open(photo.file.path) as img:
                 img_format = img.format if img.format in ["JPEG", "PNG"] else "JPEG"
-                base64_photos.append(image_to_base64(img, img_format))
+                base64_photos.append(encode_image_to_base64(img, img_format))
         except Exception as e:
             # Catch any exceptions and log the error in the database
             scan.status = ScanStatusType.ERROR.value

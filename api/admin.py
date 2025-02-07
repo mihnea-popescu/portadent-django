@@ -1,6 +1,6 @@
 from django.utils.html import format_html
 from django.contrib import admin
-from core.image_processing.image import image_to_base64
+from core.image_processing.image import encode_image_to_base64
 from PIL import Image
 from api.models import Scan, ScanPhoto, ScanProcess, ScanResult, User
 
@@ -14,7 +14,7 @@ class ScanPhotoAdmin(admin.ModelAdmin):
             try:
                 with obj.file.open('rb') as f:
                     img = Image.open(f)
-                    base64_str = image_to_base64(img)
+                    base64_str = encode_image_to_base64(img)
                     return format_html('<img src="{}" style="max-height: 200px; max-width: 200px;" />', base64_str)
             except Exception as e:
                 return f"Error displaying image: {e}"

@@ -129,74 +129,69 @@ class User(AbstractBaseUser):
         return {field: getattr(self, field) for field in fields_to_get}
 
     def generate_username(self, min_length: int = 3, max_length: int = 15) -> str:
-        """Generate a unique username for a user based on their information.
-        
-        Creates a username using email, names, or default pattern with numeric suffix if needed.
-        
+        """Generate a personalized username based on user details or email.
+
         Args:
-            min_length: Minimum allowed username length (default 3)
-            max_length: Maximum allowed username length (default 15)
-            
+            min_length: Minimum length allowed for the username.
+            max_length: Maximum length allowed for the username.
+
         Returns:
-            A unique username string meeting the length requirements
-            
-        Raises:
-            Exception: If user does not have an ID yet
+            A unique and personalized username.
         """
         if not self.pk:
-            raise Exception("Cannot generate username - user must be saved first")
-            
-        # Get base components, defaulting to empty strings
-        email_name = self.email.split('@')[0].lower() if self.email else ''
-        first = self.first_name.lower() if self.first_name else ''
-        last = self.last_name.lower() if self.last_name else ''
-        
-        # Clean components to only allow alphanumeric and underscore
-        email_name = re.sub(r'[^a-z0-9_]', '', email_name)
-        first = re.sub(r'[^a-z0-9_]', '', first)
-        last = re.sub(r'[^a-z0-9_]', '', last)
-        
-        # Try different username patterns in order of preference
-        username_options = [
-            f"{first}{last}",
-            email_name,
-            first,
-            last,
-            f"user{self.pk}",
-            f"portadent{self.pk}"
-        ]
-        
-        # Use first valid option that meets minimum length
-        base_username = next(
-            (name for name in username_options 
-             if name and len(name) >= min_length),
-            f"portadent{self.pk}"  # Fallback default
-        )
-        
-        # Truncate to max length
-        base_username = base_username[:max_length]
-        
-        # Add numbers if needed to make unique
-        final_username = base_username
-        suffix = 1
-        
-        while User.objects.filter(username=final_username).exists():
-            suffix_str = str(suffix)
-            final_username = f"{base_username[:max_length-len(suffix_str)]}{suffix_str}"
-            suffix += 1
-            
-        return final_username
+            raise ValueError("User must have an ID before generating a username.")
+
+        first_name = self.first_name.lower() if self.first_name else ""
+        last_name = self.last_name.lower() if self.last_name else ""
+        email = self.email.lower() if self.email else ""
+
+        default_username = f"portadent{self.pk}"
+
+        if not any([first_name, last_name, email]):
+            return default_username
+
+        # Replace any non-alphanumeric characters (except underscore) with underscores
+        first_name = re.sub("[^a-z0-9_]+", "_", first_name)
+        last_name = re.sub("[^a-z0-9_]+", "_", last_name)
+        email = re.sub("[^a-z0-9_@]+", "_", email)
+
+        try:
+            email_prefix = email.split("@")[0]
+            email_username = email_prefix if len(email_prefix) >= min_length else default_username
+        except Exception:
+            email_username = default_username
+
+        if first_name and last_name and len(first_name + last_name) >= min_length:
+            username = first_name + last_name
+        elif first_name and len(first_name) >= min_length:
+            username = first_name
+        elif last_name and len(last_name) >= min_length:
+            username = last_name
+        else:
+            username = email_username
+
+        # Ensure the username contains at least one alphanumeric character
+        if not re.search("[a-z0-9]", username):
+            return email_username
+
+        if username == default_username:
+            return email_username
+
+        username = username[:max_length]
+        new_username = username
+
+        while User.objects.filter(username=new_username).exists():
+            random_suffix = str(random.randint(1, 999))
+            new_username = username[: max_length - len(random_suffix)] + random_suffix
+
+        return new_username
 
     def local_time(self, utc_time: datetime) -> datetime:
-        """Convert UTC to user's local time.
+        """Convert UTC time to the user's local time.
 
-        It returns the UTC if the user doesn't have a timezone.
+        If the user has no specified timezone, return the original UTC time.
         """
-        if not self.timezone:
-            return utc_time
-
-        user_local_time = get_local_time(utc_time, self.timezone)
-        return user_local_time
+        return get_local_time(utc_time, self.timezone) if self.timezone else utc_time
 
     def has_perm(self, perm, obj=None):
         """Allow permissions only for staff users."""

@@ -1,15 +1,7 @@
 from datetime import (
     datetime,
     timedelta,
-    timezone as datetime_timezone,
 )
-from typing import List, Union
-
-import pytz
-from dateutil.relativedelta import relativedelta
-
-from django.conf import settings
-from django.utils import timezone
 
 
 def get_local_time(utc_time: datetime, timezone_offset: int) -> datetime:

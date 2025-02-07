@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from api.models import ScanPhoto, Scan
 from PIL import Image
-from core.image_processing.image import image_to_base64
+from core.image_processing.image import encode_image_to_base64
 
 
 class ScanPhotoSerializer(serializers.ModelSerializer):
@@ -35,5 +35,5 @@ class ScanPhotoSerializer(serializers.ModelSerializer):
         if isinstance(obj, ScanPhoto) and obj.file:
             with Image.open(obj.file.path) as img:
                 img_format = img.format if img.format in ["JPEG", "PNG"] else "JPEG"
-                return image_to_base64(img, img_format)
+                return encode_image_to_base64(img, img_format)
         return None
